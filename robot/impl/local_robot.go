@@ -43,7 +43,6 @@ import (
 	"go.viam.com/rdk/session"
 	"go.viam.com/rdk/utils"
 )
-var x = true
 
 var _ = robot.LocalRobot(&localRobot{})
 
