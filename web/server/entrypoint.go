@@ -389,8 +389,25 @@ func (s *robotServer) configWatcher(ctx context.Context, currCfg *config.Config,
 			//
 			// This functionality is tested in `TestLogPropagation` in `local_robot_test.go`.
 			if !diff.LogEqual {
-				s.logger.Debug("Detected potential changes to log patterns; updating logger levels")
+				s.logger.Info("Detected potential changes to log patterns; updating logger levels")
 				config.UpdateLoggerRegistryFromConfig(s.registry, processedConfig, s.logger)
+
+				for _, modCfg := range processedConfig.Modules {
+					for _, lpc := range s.registry.GetCurrentConfig() {
+						s.logger.Info("Pattern name: ", lpc.Pattern, "modCfg.Name", modCfg.Name)
+						if lpc.Pattern == modCfg.Name { // should be a regex match
+							// Was any module logger updated? If so, manually add the `log_level` to the
+							// module config based on the "level" of the pattern that affected the module.
+							if modCfg.LogLevel != lpc.Level {
+								modCfg.LogLevel = lpc.Level
+							}
+						}
+					}
+				}
+			}
+
+			for _, modCfg := range processedConfig.Modules {
+				s.logger.Info(modCfg.Name, modCfg.LogLevel)
 			}
 
 			r.Reconfigure(ctx, processedConfig)
